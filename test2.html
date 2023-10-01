@@ -28,7 +28,7 @@
             insertAt(element, index) {
                 if (index >= 0 && index <= this.elements.length) {
                     // this.elements.splice(index, 0, element);
-                    const newArray = [];
+                    let newArray = [];
                     for (let i = 0; i <= this.elements.length; i++) {
                         if (i === index) {
                             newArray[index] = element;
@@ -47,7 +47,7 @@
             removeFrom(index) {
                 if (index >= 0 && index < this.elements.length) {
                     // this.elements.splice(index, 1);
-                    const newArray = [];
+                    let newArray = [];
                     for (let i = 0; i < this.elements.length - 1; i++) {
                         if (i < index) {
                             newArray[i] = this.elements[i];
