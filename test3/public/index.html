@@ -54,6 +54,9 @@
                 .catch(error => fallback(error));
         }
 
+        let upload_successCount = 0;
+        let upload_failureCount = 0;
+
         function uploadPhoto() {
             let params = {
                 "id": 9999,
@@ -62,21 +65,28 @@
             };
 
             request(URL_UPLOAD, params, function (response) {
-                if (response.message === '上傳照片：成功') {
-                    console.log(response.message)
+                let flag = response.success;
+                if (flag) {
+                    upload_successCount++;
+                    console.log(`success: ${upload_failureCount}失敗，${upload_successCount}成功`)
                     checkPhotoStatus();
                 } else {
-                    console.error("上傳照片：失敗", response.message, "進行重試...");
+                    upload_failureCount++;
+                    console.log(`success: ${upload_failureCount}失敗，${upload_successCount}成功\n進行重試`)
                     setDelay(uploadPhoto, 2)
                 }
             }, function (error) {
-                console.error("上傳照片：失敗", error, "進行重試...");
+                console.log(`${error.message}\n進行重試`);
                 setDelay(uploadPhoto, 2)
             });
         }
 
         let maxRetries = 20;
-        let retryCount = 0;
+        let retryCount = 1;
+
+        let polling_waitCount = 0;
+        let polling_successCount = 0;
+        let polling_failureCount = 0;
 
         function checkPhotoStatus() {
             let params = { "id": 9999 };
@@ -85,7 +95,8 @@
                 let flag = response.status;
 
                 if (flag === 0) {
-                    console.log("確認照片處理狀態：處理中");
+                    polling_waitCount++
+                    console.log(`status: ${polling_waitCount}處理中，${polling_successCount}完成，${polling_failureCount}失敗\n重新確認狀態\n${retryCount}次`);
                     if (retryCount < maxRetries) {
                         retryCount++;
                         setDelay(checkPhotoStatus, 2);
@@ -100,26 +111,16 @@
                         });
                     }
                 } else if (flag === 1) {
-                    console.log("確認照片處理狀態：成功");
+                    polling_successCount++
+                    console.log(`status: ${polling_waitCount}處理中，${polling_successCount}完成，${polling_failureCount}失敗`);
                     finishProcess(true);
                 } else {
-                    console.log("確認照片處理狀態：失敗");
-                    if (retryCount < maxRetries) {
-                        retryCount++;
-                        setDelay(checkPhotoStatus, 2);
-                    } else {
-                        showMessage("是否繼續等待？", function (result) {
-                            if (result === true) {
-                                retryCount = 0;
-                                checkPhotoStatus();
-                            } else {
-                                finishProcess(false);
-                            }
-                        });
-                    }
+                    polling_failureCount++
+                    console.log(`status: ${polling_waitCount}處理中，${polling_successCount}完成，${polling_failureCount}失敗`);
+                    finishProcess(false);
                 }
             }, function (error) {
-                console.log("確認照片處理狀態：失敗");
+                console.log(`${error.message}\n重新確認狀態\n${retryCount}次`);
                 if (retryCount < maxRetries) {
                     retryCount++;
                     setDelay(checkPhotoStatus, 2);
