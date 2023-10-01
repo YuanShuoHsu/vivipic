@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>伺服器溝通</title>
+</head>
+
+<body>
+    <script>
+        let timeoutID = null;
+        function setDelay(callback, delay) {
+            timeoutID = setTimeout(callback, delay * 1000);
+        }
+        function clearDelay(id) {
+            clearTimeout(id);
+        }
+
+        let intervalID = null;
+        function setTimer(callback, interval) {
+            intervalID = setInterval(callback, interval * 1000);
+        }
+        function clearTimer(id) {
+            clearInterval(id);
+        }
+
+        function showMessage(msg, callback) {
+            const userChoice = confirm(msg);
+            callback(userChoice);
+        }
+
+        function finishProcess(isDone) {
+            if (isDone === true) {
+                console.log("照片成功完成處理");
+            } else {
+                console.log("照片處理失敗");
+            }
+        }
+
+        let URL_UPLOAD = "/upload";
+        let URL_POLLING = "/polling";
+
+        function request(url, params, callback, fallback) {
+            fetch(url, {
+                method: 'POST',
+                body: JSON.stringify(params),
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+                .then(response => response.json())
+                .then(data => callback(data))
+                .catch(error => fallback(error));
+        }
+
+        function uploadPhoto() {
+            let params = {
+                "id": 9999,
+                "image": "img_file",
+                "type": 3
+            };
+
+            request(URL_UPLOAD, params, function (response) {
+                if (response.message === '上傳照片：成功') {
+                    console.log(response.message)
+                    checkPhotoStatus();
+                } else {
+                    console.error("上傳照片：失敗", response.message, "進行重試...");
+                    setDelay(uploadPhoto, 2)
+                }
+            }, function (error) {
+                console.error("上傳照片：失敗", error, "進行重試...");
+                setDelay(uploadPhoto, 2)
+            });
+        }
+
+        let maxRetries = 20;
+        let retryCount = 0;
+
+        function checkPhotoStatus() {
+            let params = { "id": 9999 };
+
+            request(URL_POLLING, params, function (response) {
+                let flag = response.status;
+
+                if (flag === 0) {
+                    console.log("確認照片處理狀態：處理中");
+                    if (retryCount < maxRetries) {
+                        retryCount++;
+                        setDelay(checkPhotoStatus, 2);
+                    } else {
+                        showMessage("是否繼續等待？", function (result) {
+                            if (result === true) {
+                                retryCount = 0;
+                                checkPhotoStatus();
+                            } else {
+                                finishProcess(false);
+                            }
+                        });
+                    }
+                } else if (flag === 1) {
+                    console.log("確認照片處理狀態：成功");
+                    finishProcess(true);
+                } else {
+                    console.log("確認照片處理狀態：失敗");
+                    if (retryCount < maxRetries) {
+                        retryCount++;
+                        setDelay(checkPhotoStatus, 2);
+                    } else {
+                        showMessage("是否繼續等待？", function (result) {
+                            if (result === true) {
+                                retryCount = 0;
+                                checkPhotoStatus();
+                            } else {
+                                finishProcess(false);
+                            }
+                        });
+                    }
+                }
+            }, function (error) {
+                console.log("確認照片處理狀態：失敗");
+                if (retryCount < maxRetries) {
+                    retryCount++;
+                    setDelay(checkPhotoStatus, 2);
+                } else {
+                    showMessage("是否繼續等待？", function (result) {
+                        if (result === true) {
+                            retryCount = 0;
+                            checkPhotoStatus();
+                        } else {
+                            finishProcess(false);
+                        }
+                    });
+                }
+            });
+        }
+
+        uploadPhoto();
+    </script>
+</body>
+
+</html>

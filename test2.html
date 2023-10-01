@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>影像處理佇列程式虛擬碼</title>
+</head>
+
+<body>
+    <script>
+        class SampleObject {
+            constructor(name, age) {
+                this.name = name;
+                this.age = age;
+            }
+        }
+
+        class array {
+            constructor() {
+                this.elements = [];
+            }
+
+            get length() {
+                return this.elements.length;
+            }
+
+            insertAt(element, index) {
+                if (index >= 0 && index <= this.elements.length) {
+                    // this.elements.splice(index, 0, element);
+                    const newArray = [];
+                    for (let i = 0; i <= this.elements.length; i++) {
+                        if (i === index) {
+                            newArray[index] = element;
+                        } else if (i < index) {
+                            newArray[i] = this.elements[i];
+                        } else {
+                            newArray[i] = this.elements[i - 1];
+                        }
+                    }
+                    this.elements = newArray;
+                } else {
+                    throw new Error("Invalid index");
+                }
+            }
+
+            removeFrom(index) {
+                if (index >= 0 && index < this.elements.length) {
+                    // this.elements.splice(index, 1);
+                    const newArray = [];
+                    for (let i = 0; i < this.elements.length - 1; i++) {
+                        if (i < index) {
+                            newArray[i] = this.elements[i];
+                        } else {
+                            newArray[i] = this.elements[i + 1];
+                        }
+                    }
+                    this.elements = newArray;
+                } else {
+                    throw new Error("Invalid index");
+                }
+            }
+        }
+
+        function imageProcess(imagePath, callback) {
+            if (!queueArray.isEmpty()) {
+                let nextImage = queueArray.array.elements[0];
+
+                console.log(`處理影像：${nextImage}`);
+
+                setTimeout(() => {
+                    // queueArray.array.elements.shift();
+                    for (let i = 0; i < queueArray.array.elements.length - 1; i++) {
+                        queueArray.array.elements[i] = queueArray.array.elements[i + 1];
+                    }
+                    queueArray.array.elements.length--;
+
+                    console.log(`完成影像：${nextImage}`);
+
+                    imageProcess(nextImage, queueArray);
+                }, 1000);
+            } else {
+                console.log("所有影像處理完成");
+            }
+        }
+
+        class queue {
+            constructor() {
+                this.array = new array();
+            }
+
+            isEmpty() {
+                return this.array.elements.length === 0;
+            }
+
+            addToQueue(imagePath) {
+                console.log(`排入佇列：${imagePath}`)
+
+                this.array.insertAt(imagePath, this.array.elements.length);
+
+                if (this.array.elements.length === 1) {
+                    imageProcess(imagePath, this);
+                }
+            }
+
+            removeFromQueue(imagePath) {
+                console.log(`移除佇列：${imagePath}`)
+
+                // let index = this.array.elements.findIndex(element => element === imagePath);
+                let index = -1;
+                for (let i = 0; i < this.array.elements.length; i++) {
+                    if (this.array.elements[i] === imagePath) {
+                        index = i;
+                        break;
+                    }
+                }
+                if (index !== -1) {
+                    this.array.removeFrom(index);
+                }
+            }
+        }
+
+        let sampleArray = new array();
+        sampleArray.insertAt(new SampleObject("A", 10), 0);
+        sampleArray.insertAt(new SampleObject("B", 20), 0);
+        sampleArray.insertAt(new SampleObject("C", 30), 1);
+        sampleArray.removeFrom(1);
+        console.log(sampleArray.length);
+        console.log(sampleArray);
+
+        let queueArray = new queue();
+        queueArray.addToQueue("path/to/image1.jpg");
+        queueArray.addToQueue("path/to/image2.jpg");
+        queueArray.addToQueue("path/to/image3.jpg");
+        queueArray.removeFromQueue("path/to/image2.jpg");
+    </script>
+</body>
+
+</html>
