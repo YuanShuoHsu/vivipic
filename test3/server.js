@@ -1,6 +1,6 @@
 let express = require("express");
 let app = express();
-let port = 5500;
+let port = 80;
 
 app.use(express.static("public"));
 

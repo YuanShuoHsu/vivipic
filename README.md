@@ -13,11 +13,11 @@ npm i
 2. 啟動服務器
 
 ```
-node server.js
+node server
 ```
 
 4. 訪問網頁
 
 ```
-http://localhost:5500/
+http://localhost:80/
 ```
